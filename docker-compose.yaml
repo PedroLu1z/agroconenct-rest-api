@@ -1,0 +1,49 @@
+version: '3.1'
+
+services:
+  db:
+    image: oscarfonts/h2
+    environment:
+      - H2_OPTIONS=-ifNotExists
+    volumes:
+      - db-data:/h2-data
+
+    container_name: agroconnect-db
+    networks:
+      - agroconnect_network
+
+  app:
+    depends_on:
+      - db
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    working_dir: /usr/src/agroconnect-api
+    container_name: agroconnect-api
+    restart: on-failure
+    ports:
+      - 8080:8080
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:h2:tcp://db:1521/agroconnect
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=
+    networks:
+      - agroconnect_network
+
+  h2-console:
+    image: oscarfonts/h2
+    ports:
+      - "81:81"
+    container_name: agroconnect-h2-console
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:h2:tcp://db:1521/agroconnect
+    depends_on:
+      - db
+    networks:
+      - agroconnect_network
+
+networks:
+  agroconnect_network:
+
+volumes:
+  db-data:
